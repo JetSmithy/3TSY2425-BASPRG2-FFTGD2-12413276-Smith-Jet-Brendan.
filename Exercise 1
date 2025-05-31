@@ -1,1 +1,91 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+using namespace std;
+//Function that returns the bet and deducts it from the player's gold
+int placeBetReturn(int& gold) {
+    int bet;
+    do {
+        cout << "Enter your bet (you have " << gold << " gold): ";
+        cin >> bet;
+    } while (bet <= 0 || bet > gold);
 
+    gold -= bet;  //Deduct gold immediately
+    return bet;
+}
+//Function that returns void and deducts the bet from gold
+void placeBetVoid(int& gold, int& bet) {
+    do {
+        cout << "Enter your bet (you have " << gold << " gold): ";
+        cin >> bet;
+    } while (bet <= 0 || bet > gold);
+
+    gold -= bet;  // Deduct gold immediately
+}
+//Function to roll 2 dice and store the values in references
+void rollDice(int& die1, int& die2) {
+    die1 = rand() % 6 + 1;  // Random number between 1 and 6
+    die2 = rand() % 6 + 1;
+}
+//Function to evaluate the round and adjust player's gold based on outcome
+void payout(int aiSum, int playerDie1, int playerDie2, int bet, int& gold) {
+    int playerSum = playerDie1 + playerDie2;
+
+    cout << "AI rolled: " << aiSum << endl;
+    cout << "Player rolled: " << playerDie1 << " + " << playerDie2 << " = " << playerSum << endl;
+
+    if (playerDie1 == 1 && playerDie2 == 1) {
+        //Snake Eyes bonus
+        int reward = bet * 3;
+        cout << "Snake Eyes! You win " << reward << " gold!" << endl;
+        gold += reward;
+    }
+    else if (playerSum > aiSum) {
+        //Player wins
+        cout << "You win! You gain " << bet << " gold." << endl;
+        gold += bet * 2;  //Win back bet + winnings
+    }
+    else if (playerSum == aiSum) {
+        //Draw
+        cout << "It's a draw! Your bet is returned." << endl;
+        gold += bet;  //Return bet
+    }
+    else {
+        //Player loses
+        cout << "You lost the round." << endl;
+    }
+}
+//Function to play one round
+void playRound(int& gold) {
+    int bet;
+    //Use either of the two bet functions
+    //bet = placeBetReturn(gold);  
+    placeBetVoid(gold, bet);       
+
+    //AI rolls
+    int aiDie1, aiDie2;
+    rollDice(aiDie1, aiDie2);
+    int aiSum = aiDie1 + aiDie2;
+
+    //Player rolls
+    int playerDie1, playerDie2;
+    rollDice(playerDie1, playerDie2);
+
+    //Evaluate result
+    payout(aiSum, playerDie1, playerDie2, bet, gold);
+}
+int main() {
+    srand(time(0));  //Seed random number generator
+    int playerGold = 1000;
+
+    cout << "Welcome to the Dice Game!\n";
+
+    while (playerGold > 0) {
+        cout << "\n--- New Round ---\n";
+        playRound(playerGold);
+        cout << "Current Gold: " << playerGold << endl;
+    }
+
+    cout << "You've lost all your gold sadly! Game is now over.....\n";
+    return 0;
+}
