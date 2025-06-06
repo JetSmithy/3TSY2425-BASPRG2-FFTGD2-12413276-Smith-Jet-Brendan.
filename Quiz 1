@@ -1,1 +1,148 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstdlib>
+#include <ctime>
 
+using namespace std;
+
+enum Card { CIVILIAN, EMPEROR, SLAVE };
+
+string cardToString(Card c) { // Convert card to string for user feedback
+    switch (c) {
+    case CIVILIAN: return "Civilian";
+    case EMPEROR: return "Emperor";
+    case SLAVE: return "Slave";
+    default: return "Unknown";
+    }
+}
+
+vector<Card> createDeck(bool isEmperorSide) { // Create a deck with 4 Civilians and 1 Emperor or Slave
+    vector<Card> deck(4, CIVILIAN);
+    deck.push_back(isEmperorSide ? EMPEROR : SLAVE);
+    return deck;
+}
+
+int getWager(int mmLeft) { // Ask the player for a wager in mm
+    int wager;
+    do {
+        cout << "Enter wager in millimeters (1 to " << mmLeft << " mm): ";
+        cin >> wager;
+    } while (wager < 1 || wager > mmLeft);
+    return wager;
+}
+
+
+Card kaijiPlay(vector<Card>& deck) { // Let Kaiji choose a card
+    cout << "\nYour cards:\n";
+    for (int i = 0; i < deck.size(); ++i) {
+        cout << i + 1 << ". " << cardToString(deck[i]) << "\n";
+    }
+
+    int choice;
+    do {
+        cout << "Choose a card to play (1 to " << deck.size() << "): ";
+        cin >> choice;
+    } while (choice < 1 || choice > deck.size());
+
+    Card selected = deck[choice - 1];
+    deck.erase(deck.begin() + (choice - 1));
+    return selected;
+}
+
+Card opponentPlay(vector<Card>& deck) { // Randomly choose a card for opponent
+    int index = rand() % deck.size();
+    Card selected = deck[index];
+    deck.erase(deck.begin() + index);
+    return selected;
+}
+
+int evaluateMatch(Card kaijiCard, Card enemyCard) { // Evaluate the result of the matchup
+    if (kaijiCard == enemyCard) return 0; // Draw
+
+    if ((kaijiCard == EMPEROR && enemyCard == CIVILIAN) ||
+        (kaijiCard == SLAVE && enemyCard == EMPEROR) ||
+        (kaijiCard == CIVILIAN && enemyCard == SLAVE)) {
+        return 1; // Kaiji wins
+    }
+
+    return -1; // Kaiji loses
+}
+
+void playRound(int round, int& mmLeft, int& moneyEarned) {
+    bool isEmperorSide = (round == 1 || round == 2 || round == 3 ||
+        round == 7 || round == 8 || round == 9); // Play one full round
+  
+    cout << "\n ROUND " << round << "\n";
+    cout << "You are on the " << (isEmperorSide ? "Emperor" : "Slave") << " side.\n";
+    cout << "MM left before eardrum pierce: " << mmLeft << " mm\n";
+
+    int wager = getWager(mmLeft);
+    mmLeft -= wager;
+
+    vector<Card> kaijiDeck = createDeck(isEmperorSide);
+    vector<Card> enemyDeck = createDeck(!isEmperorSide);
+
+    Card kaijiCard, enemyCard;
+
+    do {
+        kaijiCard = kaijiPlay(kaijiDeck);
+        enemyCard = opponentPlay(enemyDeck);
+        cout << "Opponent played: " << cardToString(enemyCard) << "\n";
+
+        if (kaijiCard == CIVILIAN && enemyCard == CIVILIAN) {
+            cout << "Both played Civilians. Continuing the round...\n";
+        }
+
+    } while (kaijiCard == CIVILIAN && enemyCard == CIVILIAN);
+    // Loop until a Slave or Emperor is played
+    int result = evaluateMatch(kaijiCard, enemyCard);
+    if (result == 1) {
+        int earnings = wager * (isEmperorSide ? 100000 : 500000);
+        moneyEarned += earnings;
+        cout << "You WON this round! Gained " << earnings << " yen.\n";
+    }
+    else if (result == -1) {
+        cout << "You LOST this round. The device moves closer!\n";
+    }
+    else {
+        cout << "It's a DRAW. No one wins.\n";
+    }
+
+    cout << "Current Money: " << moneyEarned << " yen\n";
+    cout << "Remaining mm before pierce: " << mmLeft << " mm\n";
+}
+
+int main() {
+    srand(time(0));     // Random seed
+
+    int round = 1;
+    int mmLeft = 30;
+    int moneyEarned = 0;
+
+    cout << "Welcome to the Emperor's card game\n";
+    cout << "Kaiji must win 20 million yen in 12 rounds,\n";
+    cout << "while avoiding eardrum destruction at 30mm!\n";
+
+    while (round <= 12 && mmLeft > 0) {
+        playRound(round, mmLeft, moneyEarned);
+        if (mmLeft <= 0) break;      // Break if Kaiji has wagered all 30mm
+        round++;
+    }
+
+    cout << "\nGAME OVER\n";     // Final result
+    cout << "Total money earned: " << moneyEarned << " yen\n";
+    cout << "Total mm wagered: " << (30 - mmLeft) << " mm\n";
+
+    if (mmLeft <= 0) {
+        cout << ">> BAD ENDING: The eardrum has been pierced!\n";
+    }
+    else if (moneyEarned >= 20000000) {
+        cout << ">> BEST ENDING: You survived and earned 20 million yen! YAHHHHHOOOOOOOO\n";
+    }
+    else {
+        cout << ">> MEH ENDING: You survived, but you weren't able to reach 20 million yen.\n";
+    }
+
+    return 0;
+} 
