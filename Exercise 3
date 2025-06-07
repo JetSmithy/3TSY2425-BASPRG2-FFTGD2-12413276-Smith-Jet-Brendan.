@@ -1,1 +1,109 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <cstdlib>
+#include <ctime>
 
+using namespace std;
+
+// Struct representing a loot item
+struct Item {
+    string name;
+    int gold;
+};
+
+vector<Item> lootTable = { // Define the loot table — all items have equal probability of appearing
+    {"Mithril Ore", 100},
+    {"Sharp Talon", 50},
+    {"Thick Leather", 25},
+    {"Jellopy", 5},
+    {"Cursed Stone", 0}
+};
+
+Item* getRandomItem() { // Function to generate a random item from the loot table
+    int index = rand() % lootTable.size(); // Random index from 0 to lootTable.size()-1
+    return &lootTable[index]; // Return pointer to the selected item
+}
+
+int enterDungeon() { // Function to simulate entering the dungeon
+    const int dungeonCost = 25;     // Fixed cost to enter the dungeon
+    int totalGold = 0;              // Total gold collected during this dungeon run
+    int multiplier = 1;             // Multiplier increases as player goes deeper
+
+    cout << "\nEntering the dungeon (-" << dungeonCost << " gold)...\n";
+
+    
+    while (true) { // Loop until player exits or gets a Cursed Stone
+        Item* loot = getRandomItem(); // Get random loot item
+        cout << "You found: " << loot->name;
+
+        if (loot->name == "Cursed Stone") { // If it's a cursed stone, the run ends with no gold
+            cout << " (It's cursed! You lose all loot from this run.)\n";
+            return 0; // Return 0 gold
+        }
+        else {
+          
+            int lootValue = loot->gold * multiplier; // Calculate gold value with current multiplier
+            cout << " (Worth " << lootValue << " gold with multiplier x" << multiplier << ")\n";
+
+            totalGold += lootValue; // Accumulate dungeon gold
+
+            
+            char choice; // Ask the player if they want to keep going
+            cout << "Go deeper into the dungeon? y or n: ";
+            cin >> choice;
+
+            if (choice == 'y' || choice == 'Y') { // If yes, increase multiplier and repeat
+                multiplier++;
+            }
+            else {
+                // Player chose to exit the dungeon
+                break;
+            }
+        }
+    }
+
+    return totalGold; // Return the amount of gold collected
+}
+
+int main() {
+    srand(static_cast<unsigned int>(time(0))); // Seed the random number generator
+
+    int playerGold = 50;            // Starting gold
+    const int targetGold = 500;     // Goal to win the game
+    const int dungeonCost = 25;     // Cost to enter dungeon
+
+    cout << "Welcome to the Loot Dungeon!\n";
+    cout << "Goal: Reach " << targetGold << " gold.\n";
+
+    while (true) {  // Game loop: keep entering dungeon until win or lose
+        cout << "\nHere is your current Gold: " << playerGold << endl;
+
+        if (playerGold < dungeonCost) {         // Lose condition: not enough gold to enter dungeon
+            cout << "You don't have enough gold to enter the dungeon. Game Over!\n";
+            break;
+        }
+
+        char enter;     // Ask the player if they want to enter the dungeon
+        cout << "Enter the dungeon? y or n: ";
+        cin >> enter;
+
+        if (enter == 'y' || enter == 'Y') { // If yes, run dungeon logic
+            playerGold -= dungeonCost;// Pay the dungeon entry fee
+            int dungeonGold = enterDungeon();// Loot inside the dungeon
+            cout << "Dungeon session complete. Gold gained: " << dungeonGold << endl;
+            playerGold += dungeonGold;// Add looted gold to player total
+        }
+        else {
+            cout << "You've choosen to exit the game.\n"; // Player chose to quit
+            break;
+        }
+
+        if (playerGold >= targetGold) { // Win condition: reach or exceed 500 gold
+            cout << "\nCongrats! You've reached " << playerGold << " gold and won the game!\n";
+            break;
+        }
+    }
+
+    return 0;
+}
